@@ -1,0 +1,23 @@
+{
+  "name": "librarymanagementsystem",
+  "version": "1.0.0",
+  "description": "Library Management System — TypeScript OOP Advanced",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "npx tsx src/main.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itsuki12335-lang/LibraryManagement.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}
