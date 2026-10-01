@@ -1,5 +1,5 @@
 export enum LoanStatus {
-    ACTIVE = "AVTIVE",
+    ACTIVE = "ACTIVE",
     RETURNED = "RETURNED",
     OVERDUE = "OVERDUE",
 }
