@@ -1,7 +1,7 @@
 export class BookNotAvailableError extends Error {
   private readonly bookId: string;
   constructor(bookId: string) {
-    super(`Sách {bookId} hiện không khả dụng để mượn`);
+    super(`Sách ${bookId} hiện không khả dụng để mượn`);
     this.bookId = bookId;
   }
 }
@@ -9,7 +9,7 @@ export class MemberLimitExceededError extends Error {
   private readonly memberId: string;
   private readonly limit: number;
   constructor(memberId: string, limit: number) {
-    super(`Thành viên {memberId} đã đạt giới hạn mượn {limit} cuốn`);
+    super(`Thành viên ${memberId} đã đạt giới hạn mượn ${limit} cuốn`);
     this.memberId = memberId;
     this.limit = limit;
   }

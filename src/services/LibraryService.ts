@@ -8,9 +8,9 @@ import { ReservedState } from "../states/ReservedState";
 import { Loan } from "../models/Loan";
 import { Member } from "../models/Member";
 export class LibraryService {
-  private bookRepo = new InMemoryRepository<Book>();
-  private memberRepo = new InMemoryRepository<Member>();
-  private loanRepo = new InMemoryRepository<Loan>();
+  private readonly bookRepo = new InMemoryRepository<Book>();
+  private readonly memberRepo = new InMemoryRepository<Member>();
+  private readonly loanRepo = new InMemoryRepository<Loan>();
 
   getState(thisBook: Book): BookState {
     if (thisBook.status === BookStatus.AVAILABLE) {
