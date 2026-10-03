@@ -28,3 +28,10 @@ export class LoanAlreadyReturnedError extends Error {
     this.loanId = loanId;
   }
 }
+export class MemberNotFound extends Error {
+  private readonly memberId: string;
+  constructor(memberId: string) {
+    super(`Không tìm thấy thành viên có mã ${memberId}`);
+    this.memberId = memberId;
+  }
+}

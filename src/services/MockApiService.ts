@@ -1,6 +1,6 @@
 import { Loan } from "../models/Loan";
 
-export class MockApiService {
+export class ApiServices {
   delay(ms: number): Promise<void> {
     return new Promise((release) => setTimeout(release, ms));
   }
