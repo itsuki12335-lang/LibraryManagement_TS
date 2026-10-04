@@ -10,15 +10,17 @@ import { Member } from "../models/Member";
 import { generateId } from "../utils/GenerateId";
 import {
   BookNotAvailableError,
+  LoanAlreadyReturnedError,
+  LoanNotFoundError,
   MemberLimitExceededError,
   MemberNotFound,
 } from "../errors/LibraryErrors";
 import { LoanStatus } from "../enums/LoanStatus";
 import { ApiServices } from "./MockApiService";
 export class LibraryService {
-  private readonly bookRepo = new InMemoryRepository<Book>();
-  private readonly memberRepo = new InMemoryRepository<Member>();
-  private readonly loanRepo = new InMemoryRepository<Loan>();
+  public readonly bookRepo = new InMemoryRepository<Book>();
+  public readonly memberRepo = new InMemoryRepository<Member>();
+  public readonly loanRepo = new InMemoryRepository<Loan>();
 
   getState(thisBook: Book): BookState {
     if (thisBook.status === BookStatus.AVAILABLE) {
@@ -63,5 +65,38 @@ export class LibraryService {
     const apiServices = new ApiServices();
     await apiServices.saveLoan(loan);
     return loan;
+  }
+  async returnBook(loanId: string): Promise<number> {
+    const loan = this.loanRepo.findById(loanId);
+    let fine = 0;
+    if (loan === null) {
+      throw new LoanNotFoundError(loanId);
+    } else {
+      if (loan.status !== LoanStatus.ACTIVE) {
+        throw new LoanAlreadyReturnedError(loanId);
+      }
+      loan.returnDate = new Date();
+      loan.status = LoanStatus.RETURNED;
+      fine = loan.calculateFine(5000);
+      const book = this.bookRepo.findById(loan.bookId);
+      if (book === null) {
+        throw new BookNotAvailableError(loan.bookId);
+      }
+      this.getState(book).returnBook(book);
+      book!.updateAt = new Date();
+      this.bookRepo.update(book!.id, {
+        status: BookStatus.AVAILABLE,
+        updateAt: book!.updateAt,
+      });
+      loan.updateAt = new Date();
+      this.loanRepo.update(loanId, loan);
+      const member = this.memberRepo.findById(loan.memberId);
+      if (member === null) {
+        throw new MemberNotFound(loan.memberId);
+      }
+      member.removeActiveLoan(loanId);
+      this.memberRepo.update(member.id, member);
+    }
+    return fine;
   }
 }
