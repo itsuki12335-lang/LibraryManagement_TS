@@ -17,10 +17,12 @@ import {
 } from "../errors/LibraryErrors";
 import { LoanStatus } from "../enums/LoanStatus";
 import { ApiServices } from "./MockApiService";
+import { EventEmitter } from "../events/EventEmitter";
 export class LibraryService {
   public readonly bookRepo = new InMemoryRepository<Book>();
   public readonly memberRepo = new InMemoryRepository<Member>();
   public readonly loanRepo = new InMemoryRepository<Loan>();
+  public readonly eventEmit = new EventEmitter();
 
   getState(thisBook: Book): BookState {
     if (thisBook.status === BookStatus.AVAILABLE) {
@@ -64,6 +66,7 @@ export class LibraryService {
     this.memberRepo.update(member.id, member);
     const apiServices = new ApiServices();
     await apiServices.saveLoan(loan);
+    this.eventEmit.emit("BOOK_BORROWED", { bookId, memberId, loanId: loan.id });
     return loan;
   }
   async returnBook(loanId: string): Promise<number> {
@@ -97,6 +100,17 @@ export class LibraryService {
       member.removeActiveLoan(loanId);
       this.memberRepo.update(member.id, member);
     }
+    this.eventEmit.emit("BOOK_RETURNED", { loanId, fine });
     return fine;
+  }
+  async getOverdueLoans(): Promise<Loan[]> {
+    return this.loanRepo.filter((loan) => loan.isOverdue());
+  }
+  async searchBooks(keyword: string): Promise<Book[]> {
+    return this.bookRepo.filter(
+      (book) =>
+        book.title.toLowerCase().includes(keyword.toLowerCase()) ||
+        book.author.toLowerCase().includes(keyword.toLowerCase()),
+    );
   }
 }

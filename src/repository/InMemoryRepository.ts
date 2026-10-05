@@ -26,7 +26,7 @@ export class InMemoryRepository<T extends Entity> {
     return null;
   }
   findAll(): T[] {
-    return this.items.map((item) => ({ ...item }));
+    return this.items.map((item) => this.cloneObject(item));
   }
   update(id: string, item: Partial<T>): boolean {
     const target = this.items.find((temp) => temp.id === id);
@@ -50,7 +50,7 @@ export class InMemoryRepository<T extends Entity> {
   filter(predicate: (item: T) => boolean): T[] {
     const fil: T[] = [];
     for (const temp of this.items) {
-      if (predicate(temp)) fil.push({ ...temp });
+      if (predicate(temp)) fil.push(this.cloneObject(temp));
     }
     return fil;
   }

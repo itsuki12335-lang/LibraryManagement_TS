@@ -8,25 +8,23 @@
 ## 📊 PHẦN I: TỔNG QUAN KẾT QUẢ (SUMMARY)
 
 * **Tổng số test suites**: 5 files
-* **Tổng số test cases**: 149 tests
-* **Kết quả**: **138 Passed** | **6 Failed** | **5 Todo**
-* **Tỷ lệ thành công**: **95.8%**
+* **Tổng số test cases**: 173 tests
+* **Kết quả**: **168 Passed** | **0 Failed** | **5 Todo**
+* **Tỷ lệ thành công**: **100%** (trên tổng số test đã triển khai)
 
 | Suite File | Phân hệ / Domain | Số lượng Test | Trạng thái |
 | :--- | :--- | :---: | :---: |
 | [test/Repository.test.ts](file:///d:/Project/LibraryManagementSystem/test/Repository.test.ts) | Generic Repository Pattern (`<T>`) | 39 | **39/39 Passed (100%)** |
 | [test/Loan.test.ts](file:///d:/Project/LibraryManagementSystem/test/Loan.test.ts) | Loan Model, Overdue & Fine Logic | 50 | **50/50 Passed (100%)** |
 | [test/Book.test.ts](file:///d:/Project/LibraryManagementSystem/test/Book.test.ts) | Member Domain Model & State Pattern | 39 | **34 Passed, 5 Todo** |
-| [test/LibraryService.test.ts](file:///d:/Project/LibraryManagementSystem/test/LibraryService.test.ts) | LibraryService Orchestration Skeleton | 15 | **15 Passed (Khung)** |
-| [test/EventEmitter.test.ts](file:///d:/Project/LibraryManagementSystem/test/EventEmitter.test.ts) | Event Engine (Pub/Sub) | 6 | **6 Failed (Chưa code)** |
+| [test/LibraryService.test.ts](file:///d:/Project/LibraryManagementSystem/test/LibraryService.test.ts) | LibraryService Orchestration, Events & Edge Cases | 34 | **34/34 Passed (100%)** |
+| [test/EventEmitter.test.ts](file:///d:/Project/LibraryManagementSystem/test/EventEmitter.test.ts) | Event Engine (Pub/Sub) | 11 | **11/11 Passed (100%)** |
 
 ---
 
 ## ⚠️ PHẦN II: PHÂN TÍCH LỖI & VIỆC CẦN LÀM (FAILURES & TODOS)
 
-1. **Thất bại tại [test/EventEmitter.test.ts](file:///d:/Project/LibraryManagementSystem/test/EventEmitter.test.ts)**:
-   * *Lỗi*: `TypeError: EventEmitter is not a constructor`.
-   * *Nguyên nhân*: File `src/events/EventEmitter.ts` thuộc Phase 6 (Pub/Sub Engine) chưa được khởi tạo class và phương thức. Đây là tính năng của giai đoạn tiếp theo, không phải lỗi hồi quy của mã hiện tại.
+1. **Lỗi thất bại**: **0 Failed** (Toàn bộ 166 test case đã triển khai đều đạt tuyệt đối).
 2. **5 Test Todo tại [test/Book.test.ts](file:///d:/Project/LibraryManagementSystem/test/Book.test.ts)**:
    * *Nội dung*: Các test case cho `BookModel`, `AvailableState`, `BorrowedState`, `ReservedState`. Hiện tại các class này đã code xong ở `src/states/`, sẵn sàng để điền mã kiểm thử xác nhận.
 
@@ -248,22 +246,69 @@
 
 ---
 
-### 🗂️ SUITE 4: TẦNG SERVICE ĐIỀU PHỐI (15 Cases Khung — [LibraryService.test.ts](file:///d:/Project/LibraryManagementSystem/test/LibraryService.test.ts))
+### 🗂️ SUITE 4: TẦNG SERVICE ĐIỀU PHỐI (34 Cases — [LibraryService.test.ts](file:///d:/Project/LibraryManagementSystem/test/LibraryService.test.ts))
 
-* **Case 123 - 126**: Khung kiểm thử luồng mượn sách `borrowBook()`.
-* **Case 127 - 134**: Khung kiểm thử luồng trả sách `returnBook()`, tính phạt và ném lỗi `LoanNotFoundError`, `LoanAlreadyReturnedError`.
-* **Case 135 - 137**: Khung kiểm thử chức năng tìm kiếm sách không phân biệt hoa thường `searchBooks()`.
-* **Case 138 - 139**: Khung kiểm thử lấy danh sách phiếu quá hạn `getOverdueLoans()`.
+#### 1. Ánh xạ State Pattern — `getState()` (4 cases)
+* **Case 123**: Sách trạng thái `AVAILABLE` ➔ trả về `AvailableState` ➔ **Pass**.
+* **Case 124**: Sách trạng thái `BORROWED` ➔ trả về `BorrowedState` ➔ **Pass**.
+* **Case 125**: Sách trạng thái `RESERVED` ➔ trả về `ReservedState` ➔ **Pass**.
+* **Case 126**: Sách trạng thái `LOST` ➔ ném `Error("Sách đã bị mất")` ➔ **Pass**.
+
+#### 2. Mượn sách, Hạn mức & Bắn sự kiện — `borrowBook()` (9 cases)
+* **Case 127**: Luồng mượn chuẩn ➔ Tạo Loan `ACTIVE`, hạn 14 ngày, đổi sách sang `BORROWED`, thêm loan vào Member ➔ **Pass**.
+* **Case 128**: Sách không tồn tại trong kho ➔ Ném `BookNotAvailableError` ➔ **Pass**.
+* **Case 129**: Sách đang `BORROWED` ➔ Ném `BookNotAvailableError` ➔ **Pass**.
+* **Case 130**: Thành viên không tồn tại trong kho ➔ Ném `MemberNotFound` ➔ **Pass**.
+* **Case 131**: Thành viên đang có 4 phiếu mượn (dưới giới hạn 5) ➔ Mượn thành công cuốn thứ 5 ➔ **Pass**.
+* **Case 132**: Thành viên đang có đúng 5 phiếu mượn ➔ Ném `MemberLimitExceededError` ➔ **Pass**.
+* **Case 133**: Thành viên có hơn 5 phiếu mượn ➔ Ném `MemberLimitExceededError` ➔ **Pass**.
+* **Case 134**: Cùng một thành viên mượn liên tiếp nhiều cuốn sách ➔ Cả 2 ID phiếu mượn được lưu độc lập vào Member ➔ **Pass**.
+* **Case 135 (Event)**: Bắn sự kiện `"BOOK_BORROWED"` với đầy đủ `{ bookId, memberId, loanId }` khi mượn thành công ➔ **Pass**.
+
+#### 3. Trả sách, Tính phạt, Khôi phục & Bắn sự kiện — `returnBook()` (10 cases)
+* **Case 136**: Trả đúng hạn ➔ Tiền phạt `fine = 0`, Loan chuyển `RETURNED`, Sách về `AVAILABLE`, Member giải phóng suất ➔ **Pass**.
+* **Case 137**: Trả đúng ngày hẹn `dueDate` ➔ Tiền phạt `fine = 0` ➔ **Pass**.
+* **Case 138**: Trả trễ 1 ngày ➔ Phạt 5.000đ ➔ **Pass**.
+* **Case 139**: Trả trễ 5 ngày ➔ Phạt 25.000đ (5 × 5.000đ) ➔ **Pass**.
+* **Case 140**: Mã phiếu mượn không tồn tại trong kho ➔ Ném `LoanNotFoundError` ➔ **Pass**.
+* **Case 141**: Phiếu mượn đã có trạng thái `RETURNED` ➔ Ném `LoanAlreadyReturnedError` ➔ **Pass**.
+* **Case 142**: Sách trong phiếu mượn bị mất khỏi kho khi trả ➔ Ném `BookNotAvailableError` ➔ **Pass**.
+* **Case 143**: Thành viên trong phiếu mượn bị mất khỏi kho khi trả ➔ Ném `MemberNotFound` ➔ **Pass**.
+* **Case 144 (Tích hợp vòng đời)**: Thành viên chạm mốc 5 cuốn ➔ Bị chặn ➔ Trả 1 cuốn ➔ Mượn lại thành công ➔ **Pass**.
+* **Case 145 (Event)**: Bắn sự kiện `"BOOK_RETURNED"` với đầy đủ `{ loanId, fine }` khi trả thành công ➔ **Pass**.
+
+#### 4. Tìm kiếm Sách đa năng — `searchBooks()` (7 cases)
+* **Case 146**: Tìm kiếm khớp một phần tiêu đề viết thường ➔ **Pass**.
+* **Case 147**: Tìm kiếm khớp một phần tên tác giả viết hoa ➔ **Pass**.
+* **Case 148**: Tìm kiếm từ khóa chung tác giả trả về nhiều cuốn sách ➔ **Pass**.
+* **Case 149**: Tìm kiếm theo tiền tố tiêu đề chung trả về đúng các sách liên quan ➔ **Pass**.
+* **Case 150**: Từ khóa không khớp bất kỳ sách nào ➔ Trả về mảng rỗng `[]` ➔ **Pass**.
+* **Case 151**: Chuỗi tìm kiếm rỗng `""` ➔ Trả về toàn bộ sách trong kho ➔ **Pass**.
+* **Case 152**: Tìm kiếm khi kho rỗng ➔ Trả về mảng rỗng `[]` an toàn ➔ **Pass**.
+
+#### 5. Quản lý Quá hạn — `getOverdueLoans()` (4 cases)
+* **Case 153**: Kho phiếu mượn chưa có dữ liệu ➔ Trả về mảng rỗng `[]` ➔ **Pass**.
+* **Case 154**: Tất cả các phiếu mượn đều còn hạn ➔ Trả về mảng rỗng `[]` ➔ **Pass**.
+* **Case 155**: Lọc đúng phiếu quá hạn `ACTIVE` và loại bỏ phiếu quá hạn đã `RETURNED` ➔ **Pass**.
+* **Case 156**: Nhiều thành viên cùng quá hạn ➔ Trả về đầy đủ danh sách ➔ **Pass**.
 
 ---
 
-### 🗂️ SUITE 5: EVENT-DRIVEN ENGINE (6 Cases Thất Bại — [EventEmitter.test.ts](file:///d:/Project/LibraryManagementSystem/test/EventEmitter.test.ts))
+### 🗂️ SUITE 5: EVENT-DRIVEN ENGINE (11 Cases — [EventEmitter.test.ts](file:///d:/Project/LibraryManagementSystem/test/EventEmitter.test.ts))
 
-* **Case 140 - 145**:
-  * Đăng ký sự kiện qua `on()`.
-  * Truyền dữ liệu qua `emit()`.
-  * Hỗ trợ nhiều listener cho cùng một sự kiện.
-  * Không kích hoạt nhầm sự kiện khác.
-  * Hủy lắng nghe sự kiện qua `off()`.
-  * An toàn khi `emit` một sự kiện không có ai lắng nghe.
-  * **Trạng thái**: *Chờ hoàn thiện ở Phase 6*.
+#### 1. Luồng chuẩn & Gọi thực thi (Happy Path) (4 cases)
+* **Case 157**: Đăng ký và gọi đúng callback khi sự kiện được phát (`emit`) ➔ **Pass**.
+* **Case 158**: Truyền dữ liệu (`data`) toàn vẹn từ nguồn phát sang hàm callback ➔ **Pass**.
+* **Case 159**: Hỗ trợ nhiều listener độc lập cùng đăng ký vào một sự kiện ➔ **Pass**.
+* **Case 160**: Gọi các listener theo đúng thứ tự đăng ký trước sau (FIFO) ➔ **Pass**.
+
+#### 2. Tính cô lập sự kiện (Event Isolation) (1 case)
+* **Case 161**: Phát sự kiện này không kích hoạt nhầm các listener của sự kiện khác ➔ **Pass**.
+
+#### 3. Hủy lắng nghe (`off`) & Trường hợp đặc biệt (Edge Cases) (6 cases)
+* **Case 162**: Hủy lắng nghe bằng `off()` ngăn không cho callback chạy khi `emit` ➔ **Pass**.
+* **Case 163**: Hủy đúng một listener cụ thể mà không ảnh hưởng tới các listener khác cùng sự kiện ➔ **Pass**.
+* **Case 164 (Edge Case)**: Gọi `off()` trên một sự kiện chưa từng tồn tại hoạt động an toàn, không văng lỗi ➔ **Pass**.
+* **Case 165 (Edge Case)**: Gọi `off()` với một callback chưa từng đăng ký không làm xáo trộn danh sách hiện có ➔ **Pass**.
+* **Case 166 (Edge Case)**: Gọi `emit()` trên sự kiện không có ai lắng nghe diễn ra êm xuôi ➔ **Pass**.
+* **Case 167 (Edge Case)**: Truyền các dữ liệu Falsy (`0`, `false`, `null`, `""`, `{}`) qua `emit()` được tiếp nhận chính xác ➔ **Pass**.
